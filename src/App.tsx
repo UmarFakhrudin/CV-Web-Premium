@@ -96,7 +96,7 @@ export default function App() {
     {
       year: '2020 – 2023',
       company: 'J&T Express CP',
-      role: 'Leader / Shift Lead Collection Point',
+      role: 'Sales Counter Officer Collection Point',
       location: 'Tegalgubug',
       desc: 'Mengawasi dan memonitor alur kerja tim sesuai SOP, memonitor proses scan barang masuk/keluar, mencatat pengiriman dan keuangan harian/mingguan/bulanan.'
     },
