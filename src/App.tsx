@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { 
   Download, 
   Mail, 
@@ -18,7 +18,10 @@ import {
   Github,
   Linkedin,
   Instagram,
-  MessageCircle
+  MessageCircle,
+  Send,
+  User,
+  MessageSquare
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -27,6 +30,35 @@ const PROFILE_IMAGE_PATH = '/cv_umar_fakhrudin.jpg'; // Using same for now, but 
 
 export default function App() {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [formStatus, setFormStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+
+  const handleFormSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setFormStatus('loading');
+    
+    const formData = new FormData(e.currentTarget);
+    
+    try {
+      const response = await fetch('https://formspree.io/f/xpwqrqzd', { // Placeholder, user should replace with their ID
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        setFormStatus('success');
+        (e.target as HTMLFormElement).reset();
+      } else {
+        setFormStatus('error');
+      }
+    } catch (error) {
+      setFormStatus('error');
+    }
+    
+    setTimeout(() => setFormStatus('idle'), 5000);
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -387,53 +419,142 @@ export default function App() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl mb-12">
-                {[
-                  { icon: Phone, text: '0896-7666-8137' },
-                  { icon: Mail, text: 'umar.fakhrudin17@gmail.com' },
-                  { icon: MapPin, text: 'Kab. Cirebon, Indonesia' }
-                ].map((item, i) => (
-                  <motion.div 
-                    key={i}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.4 + (i * 0.1) }}
-                    className="bg-neutral-950 p-6 rounded-2xl border border-neutral-800 flex flex-col items-center gap-4"
-                  >
-                    <div className="w-10 h-10 bg-gold-500/10 rounded-full flex items-center justify-center text-gold-500">
-                      <item.icon size={20} />
-                    </div>
-                    <span className="text-sm font-medium">{item.text}</span>
-                  </motion.div>
-                ))}
-              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 w-full max-w-6xl">
+                {/* Contact Info Chips */}
+                <div className="flex flex-col gap-6">
+                  <div className="text-left mb-8">
+                    <h3 className="text-2xl font-display font-bold text-white mb-4">Contact Details</h3>
+                    <p className="text-neutral-400">Feel free to reach out through any of these channels.</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-4">
+                    {[
+                      { icon: Phone, text: '0896-7666-8137', label: 'Phone' },
+                      { icon: Mail, text: 'umar.fakhrudin17@gmail.com', label: 'Email' },
+                      { icon: MapPin, text: 'Kab. Cirebon, Indonesia', label: 'Location' }
+                    ].map((item, i) => (
+                      <motion.div 
+                        key={i}
+                        initial={{ opacity: 0, x: -20 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.2 + (i * 0.1) }}
+                        className="bg-neutral-950 p-6 rounded-2xl border border-neutral-800 flex items-center gap-6 group hover:border-gold-500/30 transition-all"
+                      >
+                        <div className="w-12 h-12 bg-gold-500/10 rounded-xl flex items-center justify-center text-gold-500 group-hover:bg-gold-500 group-hover:text-neutral-950 transition-all">
+                          <item.icon size={24} />
+                        </div>
+                        <div className="text-left">
+                          <p className="text-xs font-bold text-gold-500 uppercase tracking-widest mb-1">{item.label}</p>
+                          <span className="text-lg font-medium text-white">{item.text}</span>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
 
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.7 }}
-                className="flex flex-wrap justify-center gap-4"
-              >
-                <a 
-                  href={CV_IMAGE_PATH}
-                  download="CV_Umar_Fakhrudin.jpg"
-                  className="bg-gold-500 text-neutral-950 px-10 py-5 rounded-2xl font-bold hover:bg-gold-400 transition-all flex items-center gap-3 shadow-xl shadow-gold-500/20 text-lg"
+                  <div className="mt-8 flex flex-wrap gap-4">
+                    <a 
+                      href="https://wa.me/6289676668137" 
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-green-600/10 text-green-500 px-6 py-3 rounded-xl font-bold hover:bg-green-600 hover:text-white transition-all flex items-center gap-3 border border-green-600/20"
+                    >
+                      <MessageCircle size={20} />
+                      WhatsApp Me
+                    </a>
+                  </div>
+                </div>
+
+                {/* Contact Form */}
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  className="bg-neutral-950 p-8 md:p-10 rounded-3xl border border-neutral-800 text-left"
                 >
-                  <Download size={24} />
-                  Download CV
-                </a>
-                <a 
-                  href="https://wa.me/6289676668137" 
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-neutral-800 text-white px-10 py-5 rounded-2xl font-bold hover:bg-neutral-700 transition-all flex items-center gap-3 border border-neutral-700 text-lg"
-                >
-                  <MessageCircle size={24} className="text-green-500" />
-                  Chat WhatsApp
-                </a>
-              </motion.div>
+                  <h3 className="text-2xl font-display font-bold text-white mb-8 flex items-center gap-3">
+                    <Send className="text-gold-500" size={24} />
+                    Send a Message
+                  </h3>
+                  
+                  <form onSubmit={handleFormSubmit} className="space-y-6">
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-neutral-400 uppercase tracking-widest ml-1">Full Name</label>
+                      <div className="relative">
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-600" size={18} />
+                        <input 
+                          type="text" 
+                          name="name"
+                          required
+                          placeholder="Your Name"
+                          className="w-full bg-neutral-900 border border-neutral-800 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-gold-500 transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-neutral-400 uppercase tracking-widest ml-1">Email Address</label>
+                      <div className="relative">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-neutral-600" size={18} />
+                        <input 
+                          type="email" 
+                          name="email"
+                          required
+                          placeholder="your@email.com"
+                          className="w-full bg-neutral-900 border border-neutral-800 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-gold-500 transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-neutral-400 uppercase tracking-widest ml-1">Message</label>
+                      <div className="relative">
+                        <MessageSquare className="absolute left-4 top-4 text-neutral-600" size={18} />
+                        <textarea 
+                          name="message"
+                          required
+                          rows={4}
+                          placeholder="How can I help you?"
+                          className="w-full bg-neutral-900 border border-neutral-800 rounded-xl py-4 pl-12 pr-4 text-white focus:outline-none focus:border-gold-500 transition-all resize-none"
+                        ></textarea>
+                      </div>
+                    </div>
+
+                    <button 
+                      type="submit"
+                      disabled={formStatus === 'loading'}
+                      className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-3 transition-all shadow-lg ${
+                        formStatus === 'loading' ? 'bg-neutral-800 text-neutral-500 cursor-not-allowed' :
+                        formStatus === 'success' ? 'bg-green-600 text-white' :
+                        formStatus === 'error' ? 'bg-red-600 text-white' :
+                        'bg-gold-500 text-neutral-950 hover:bg-gold-400 shadow-gold-500/20'
+                      }`}
+                    >
+                      {formStatus === 'loading' ? 'Sending...' : 
+                       formStatus === 'success' ? 'Message Sent!' :
+                       formStatus === 'error' ? 'Failed to Send' :
+                       <>
+                         <Send size={20} />
+                         Send Message
+                       </>
+                      }
+                    </button>
+                    
+                    <AnimatePresence>
+                      {formStatus === 'success' && (
+                        <motion.p 
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0 }}
+                          className="text-green-500 text-sm font-medium text-center mt-4"
+                        >
+                          Thank you! I'll get back to you as soon as possible.
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                  </form>
+                </motion.div>
+              </div>
             </div>
           </motion.div>
         </div>
