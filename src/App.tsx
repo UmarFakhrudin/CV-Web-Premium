@@ -25,8 +25,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-const CV_IMAGE_PATH = '/cv_umar_fakhrudin.jpg';
-const PROFILE_IMAGE_PATH = '/cv_umar_fakhrudin.jpg'; // Using same for now, but user can replace
+const CV_IMAGE_PATH = '/cv_saya.jpg';
+const PROFILE_IMAGE_PATH = '/foto_saya.jpg'; // Using same for now, but user can replace
 
 export default function App() {
   const [isScrolled, setIsScrolled] = useState(false);
