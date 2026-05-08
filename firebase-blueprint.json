@@ -1,0 +1,91 @@
+{
+  "entities": {
+    "Config": {
+      "title": "Site Configuration",
+      "description": "Global configuration and admin credentials.",
+      "type": "object",
+      "properties": {
+        "adminUsername": { "type": "string" },
+        "adminPassword": { "type": "string" }
+      },
+      "required": ["adminUsername", "adminPassword"]
+    },
+    "PortfolioData": {
+      "title": "Portfolio Data",
+      "description": "All data displayed on the CV website.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "lastName": { "type": "string" },
+        "role": { "type": "string" },
+        "description": { "type": "string" },
+        "availableForWork": { "type": "boolean" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "address": { "type": "string" },
+        "whatsappNumber": { "type": "string" },
+        "socialLinks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "platform": { "type": "string" },
+              "url": { "type": "string" }
+            }
+          }
+        },
+        "profileImageUrl": { "type": "string" },
+        "cvPdfPath": { "type": "string" },
+        "cvJpgPath": { "type": "string" },
+        "skills": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "level": { "type": "number" },
+              "icon": { "type": "string" }
+            }
+          }
+        },
+        "experiences": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "year": { "type": "string" },
+              "company": { "type": "string" },
+              "role": { "type": "string" },
+              "location": { "type": "string" },
+              "desc": { "type": "string" },
+              "current": { "type": "boolean" }
+            }
+          }
+        },
+        "education": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "year": { "type": "string" },
+              "school": { "type": "string" },
+              "major": { "type": "string" },
+              "location": { "type": "string" },
+              "highlight": { "type": "boolean" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "settings/config": {
+      "schema": "Config",
+      "description": "System settings and admin credentials"
+    },
+    "data/portfolio": {
+      "schema": "PortfolioData",
+      "description": "Main portfolio content"
+    }
+  }
+}

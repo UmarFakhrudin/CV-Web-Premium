@@ -18,6 +18,9 @@ import {
   Github,
   Linkedin,
   Instagram,
+  Facebook,
+  Twitter,
+  Globe,
   MessageCircle,
   Send,
   User,
@@ -25,24 +28,117 @@ import {
   Sun,
   Moon,
   FileText,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Menu,
+  X as CloseIcon
 } from 'lucide-react';
 import { motion, AnimatePresence, useScroll, useSpring } from 'motion/react';
+import { db } from './firebase';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import AdminPanel from './components/AdminPanel';
 
-const CV_JPG_PATH = '/cv_siti_rahmawati.jpg';
-const CV_PDF_PATH = '/cv_siti_rahmawati.pdf';
-const PROFILE_IMAGE_PATH = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=800&auto=format&fit=crop';
+const INITIAL_DATA = {
+  name: 'Siti',
+  lastName: 'Rahmawati',
+  role: 'Social Media Specialist & Graphic Designer',
+  description: 'Membantu brand bertumbuh melalui strategi media sosial yang kreatif dan visual yang memukau. Berpengalaman dalam mengelola kampanye digital dan branding identitas.',
+  availableForWork: true,
+  phone: '0812-3456-7890',
+  email: 'siti.rahmawati@email.com',
+  address: 'Bandung, Jawa Barat',
+  whatsappNumber: '6281234567890',
+  socialLinks: [
+    { platform: 'Instagram', url: 'https://instagram.com/placeholder' },
+    { platform: 'Linkedin', url: 'https://linkedin.com/in/placeholder' },
+    { platform: 'Github', url: 'https://github.com/placeholder' }
+  ],
+  profileImageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=800&auto=format&fit=crop',
+  cvPdfPath: '/cv_siti_rahmawati.pdf',
+  cvJpgPath: '/cv_siti_rahmawati.jpg',
+  skills: [
+    { name: 'Social Media Strategy', level: 92, icon: '📱' },
+    { name: 'Content Creation', level: 95, icon: '✍️' },
+    { name: 'Adobe Illustrator', level: 88, icon: '🎨' },
+    { name: 'Copywriting', level: 90, icon: '📝' },
+    { name: 'Digital Marketing', level: 85, icon: '📊' },
+    { name: 'Video Editing', level: 82, icon: '🎬' },
+  ],
+  experiences: [
+    {
+      year: '2022 – Sekarang',
+      company: 'Creative Hub Agency',
+      role: 'Senior Social Media Specialist',
+      location: 'Jakarta Selatan',
+      desc: 'Mengelola strategi konten untuk 10+ klien korporat, meningkatkan engagement rata-rata sebesar 45% dalam satu tahun, dan memimpin tim kreatif dalam produksi kampanye digital.',
+      current: true
+    },
+    {
+      year: '2020 – 2022',
+      company: 'Fashionista E-commerce',
+      role: 'Content Creator & Designer',
+      location: 'Bandung',
+      desc: 'Bertanggung jawab atas visual branding di Instagram dan TikTok, memproduksi 50+ aset konten mingguan, dan berkolaborasi dengan influencer untuk peluncuran produk baru.'
+    },
+    {
+      year: '2018 – 2020',
+      company: 'Studio Grafika',
+      role: 'Junior Graphic Designer',
+      location: 'Bandung',
+      desc: 'Mendesain identitas visual, brosur, dan materi promosi cetak. Memastikan kualitas cetak sesuai standar dan menangani komunikasi dengan vendor percetakan.'
+    }
+  ],
+  education: [
+    {
+      year: '2014 – 2018',
+      school: 'Universitas Padjadjaran',
+      major: 'S1 Ilmu Komunikasi',
+      location: 'Sumedang, Jawa Barat',
+      highlight: true
+    },
+    {
+      year: '2011 – 2014',
+      school: 'SMA Negeri 1 Bandung',
+      major: 'Ilmu Pengetahuan Sosial',
+      location: 'Bandung, Jawa Barat'
+    }
+  ]
+};
 
 export default function App() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isDark, setIsDark] = useState(true);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [ mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [formStatus, setFormStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [portfolioData, setPortfolioData] = useState<any>(null);
 
   // Cursor follower spring
   const springConfig = { damping: 25, stiffness: 700 };
   const cursorX = useSpring(0, springConfig);
   const cursorY = useSpring(0, springConfig);
+
+  useEffect(() => {
+    // Real-time synchronization with Firestore
+    const unsub = onSnapshot(doc(db, 'data', 'portfolio'), (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        // Migration/Safety: Ensure arrays exist before setting state
+        setPortfolioData({
+          ...INITIAL_DATA, // Start with defaults
+          ...data,         // Overwrite with DB values
+          socialLinks: data.socialLinks || INITIAL_DATA.socialLinks, // Migrate old records
+          skills: data.skills || [],
+          experiences: data.experiences || [],
+          education: data.education || []
+        });
+      } else {
+        // First load - seed initial data
+        setDoc(doc(db, 'data', 'portfolio'), INITIAL_DATA);
+        setPortfolioData(INITIAL_DATA);
+      }
+    });
+    return () => unsub();
+  }, []);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -91,55 +187,17 @@ export default function App() {
     setTimeout(() => setFormStatus('idle'), 5000);
   };
 
-  const skills = [
-    { name: 'Social Media Strategy', level: 92, icon: '📱' },
-    { name: 'Content Creation', level: 95, icon: '✍️' },
-    { name: 'Adobe Illustrator', level: 88, icon: '🎨' },
-    { name: 'Copywriting', level: 90, icon: '📝' },
-    { name: 'Digital Marketing', level: 85, icon: '📊' },
-    { name: 'Video Editing', level: 82, icon: '🎬' },
-  ];
+  if (!portfolioData) return <div className="min-h-screen bg-neutral-950 flex items-center justify-center text-gold-500 font-display">Memuat Portofolio...</div>;
 
-  const experiences = [
-    {
-      year: '2022 – Sekarang',
-      company: 'Creative Hub Agency',
-      role: 'Senior Social Media Specialist',
-      location: 'Jakarta Selatan',
-      desc: 'Mengelola strategi konten untuk 10+ klien korporat, meningkatkan engagement rata-rata sebesar 45% dalam satu tahun, dan memimpin tim kreatif dalam produksi kampanye digital.',
-      current: true
-    },
-    {
-      year: '2020 – 2022',
-      company: 'Fashionista E-commerce',
-      role: 'Content Creator & Designer',
-      location: 'Bandung',
-      desc: 'Bertanggung jawab atas visual branding di Instagram dan TikTok, memproduksi 50+ aset konten mingguan, dan berkolaborasi dengan influencer untuk peluncuran produk baru.'
-    },
-    {
-      year: '2018 – 2020',
-      company: 'Studio Grafika',
-      role: 'Junior Graphic Designer',
-      location: 'Bandung',
-      desc: 'Mendesain identitas visual, brosur, dan materi promosi cetak. Memastikan kualitas cetak sesuai standar dan menangani komunikasi dengan vendor percetakan.'
-    }
-  ];
-
-  const education = [
-    {
-      year: '2014 – 2018',
-      school: 'Universitas Padjadjaran',
-      major: 'S1 Ilmu Komunikasi',
-      location: 'Sumedang, Jawa Barat',
-      highlight: true
-    },
-    {
-      year: '2011 – 2014',
-      school: 'SMA Negeri 1 Bandung',
-      major: 'Ilmu Pengetahuan Sosial',
-      location: 'Bandung, Jawa Barat'
-    }
-  ];
+  const getSocialIcon = (platform: string) => {
+    const p = platform.toLowerCase();
+    if (p.includes('instagram')) return Instagram;
+    if (p.includes('linkedin')) return Linkedin;
+    if (p.includes('github')) return Github;
+    if (p.includes('facebook')) return Facebook;
+    if (p.includes('twitter') || p.includes('x')) return Twitter;
+    return Globe;
+  };
 
   return (
     <div className={`min-h-screen transition-colors duration-500 ${isDark ? 'bg-neutral-950 text-neutral-200' : 'bg-neutral-50 text-neutral-800'} selection:bg-gold-500 selection:text-neutral-950`}>
@@ -150,15 +208,31 @@ export default function App() {
       />
 
       {/* Navigation */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? (isDark ? 'bg-neutral-950/80' : 'bg-white/80') + ' backdrop-blur-md py-4 border-b border-neutral-800/20' : 'bg-transparent py-6'}`}>
-        <div className="container mx-auto px-6 flex justify-between items-center">
+      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled || isMenuOpen ? (isDark ? 'bg-neutral-950/90' : 'bg-white/90') + ' backdrop-blur-md py-4 border-b border-neutral-800/20' : 'bg-transparent py-6'}`}>
+        <div className="container mx-auto px-4 md:px-6 flex justify-between items-center">
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             className="text-2xl font-display font-bold text-gold-500"
           >
-            SR
+            {portfolioData.name.charAt(0)}{portfolioData.lastName.charAt(0)}
           </motion.div>
+
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={toggleTheme}
+              className={`p-2 rounded-full transition-all md:hidden ${isDark ? 'bg-neutral-900 text-gold-500 hover:bg-neutral-800' : 'bg-neutral-100 text-gold-600 hover:bg-neutral-200'}`}
+            >
+              {isDark ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            <button 
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className={`p-2 rounded-xl md:hidden transition-all ${isDark ? 'text-white hover:bg-neutral-900' : 'text-neutral-900 hover:bg-neutral-100'}`}
+            >
+              {isMenuOpen ? <CloseIcon size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
+
           <div className="hidden md:flex items-center space-x-8">
             <div className="flex space-x-8 text-sm font-medium uppercase tracking-widest">
               {['Skills', 'Experience', 'Education', 'Contact'].map((item) => (
@@ -181,40 +255,89 @@ export default function App() {
               >
                 {isDark ? <Sun size={18} /> : <Moon size={18} />}
               </button>
-              {[
-                { Icon: Instagram, url: 'https://instagram.com/placeholder' },
-                { Icon: Linkedin, url: 'https://linkedin.com/in/placeholder' },
-                { Icon: Github, url: 'https://github.com/placeholder' }
-              ].map(({ Icon, url }, i) => (
-                <a 
-                  key={i} 
-                  href={url} 
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-neutral-500 hover:text-gold-500 transition-all"
-                >
-                  <Icon size={18} />
-                </a>
-              ))}
+              {portfolioData.socialLinks.map((link: any, i: number) => {
+                const Icon = getSocialIcon(link.platform);
+                return (
+                  <a 
+                    key={i} 
+                    href={link.url} 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-neutral-500 hover:text-gold-500 transition-all"
+                  >
+                    <Icon size={18} />
+                  </a>
+                );
+              })}
             </div>
-          </div>
-          <div className="flex items-center gap-2">
             <div className="group relative">
               <button className="bg-gold-500 text-neutral-950 px-5 py-2 rounded-full text-sm font-bold hover:bg-gold-400 transition-all flex items-center gap-2">
                 <Download size={16} />
                 CV
               </button>
               <div className="absolute right-0 mt-2 w-40 bg-neutral-900 border border-neutral-800 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                <a href={CV_PDF_PATH} download className="flex items-center gap-3 px-4 py-3 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-gold-500 rounded-t-xl transition-colors">
+                <a href={portfolioData.cvPdfPath} download className="flex items-center gap-3 px-4 py-3 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-gold-500 rounded-t-xl transition-colors">
                   <FileText size={16} /> Download PDF
                 </a>
-                <a href={CV_JPG_PATH} download className="flex items-center gap-3 px-4 py-3 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-gold-500 rounded-b-xl transition-colors">
+                <a href={portfolioData.cvJpgPath} download className="flex items-center gap-3 px-4 py-3 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-gold-500 rounded-b-xl transition-colors">
                   <ImageIcon size={16} /> Download JPG
                 </a>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        <AnimatePresence>
+          {isMenuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className={`md:hidden overflow-hidden border-t mt-4 ${isDark ? 'border-neutral-800 bg-neutral-950/95' : 'border-neutral-100 bg-white/95'} backdrop-blur-lg`}
+            >
+              <div className="flex flex-col p-6 space-y-6">
+                {['Skills', 'Experience', 'Education', 'Contact'].map((item) => (
+                  <a 
+                    key={item} 
+                    href={`#${item.toLowerCase()}`} 
+                    onClick={() => setIsMenuOpen(false)}
+                    className={`text-lg font-display font-medium tracking-wide ${isDark ? 'text-neutral-300' : 'text-neutral-700'} hover:text-gold-500 transition-colors`}
+                  >
+                    {item}
+                  </a>
+                ))}
+                
+                <div className="pt-6 border-t border-neutral-800/20 flex flex-col gap-4">
+                  <div className="flex flex-wrap gap-4">
+                    {portfolioData.socialLinks.map((link: any, i: number) => {
+                      const Icon = getSocialIcon(link.platform);
+                      return (
+                        <a 
+                          key={i} 
+                          href={link.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className={`w-12 h-12 rounded-xl flex items-center justify-center border ${isDark ? 'border-neutral-800 text-neutral-500' : 'border-neutral-100 text-neutral-500'}`}
+                        >
+                          <Icon size={20} />
+                        </a>
+                      );
+                    })}
+                  </div>
+                  <div className="flex gap-4">
+                    <a href={portfolioData.cvPdfPath} download className="flex-1 bg-neutral-800 text-white p-4 rounded-xl text-center text-sm font-bold flex items-center justify-center gap-2">
+                      <FileText size={18} /> PDF CV
+                    </a>
+                    <a href={portfolioData.cvJpgPath} download className="flex-1 bg-neutral-800 text-white p-4 rounded-xl text-center text-sm font-bold flex items-center justify-center gap-2">
+                      <ImageIcon size={18} /> JPG CV
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
       {/* Hero Section */}
@@ -237,8 +360,8 @@ export default function App() {
               <div className={`w-64 h-64 md:w-80 md:h-80 rounded-2xl overflow-hidden border-2 border-gold-500/30 p-2 ${isDark ? 'bg-neutral-900' : 'bg-white'} shadow-2xl shadow-gold-500/10`}>
                 <div className="w-full h-full rounded-xl overflow-hidden relative group">
                   <img 
-                    src={PROFILE_IMAGE_PATH} 
-                    alt="Siti Rahmawati" 
+                    src={portfolioData.profileImageUrl} 
+                    alt={`${portfolioData.name} ${portfolioData.lastName}`} 
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                     referrerPolicy="no-referrer"
                   />
@@ -250,45 +373,45 @@ export default function App() {
               <div className="absolute -inset-8 border border-gold-500/5 rounded-3xl -z-10 animate-[spin_30s_linear_infinite_reverse]" />
             </motion.div>
 
-            <div className="flex-1 text-center md:text-left">
+            <div className="flex-1 text-center md:text-left w-full">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                <span className="inline-block px-4 py-1 rounded-full bg-gold-500/10 text-gold-500 text-xs font-bold uppercase tracking-widest mb-6 border border-gold-500/20">
-                  ● Available for Projects
+                <span className="inline-block px-4 py-1 rounded-full bg-gold-500/10 text-gold-500 text-[10px] md:text-xs font-bold uppercase tracking-widest mb-4 md:mb-6 border border-gold-500/20">
+                  ● {portfolioData.availableForWork ? 'Available for Projects' : 'Currently Busy'}
                 </span>
-                <h1 className={`font-display text-5xl md:text-7xl font-extrabold ${isDark ? 'text-white' : 'text-neutral-900'} mb-4 leading-tight`}>
-                  Siti <span className="text-gold-500">Rahmawati</span>
+                <h1 className={`font-display text-4xl sm:text-5xl md:text-7xl font-extrabold ${isDark ? 'text-white' : 'text-neutral-900'} mb-4 leading-tight`}>
+                  {portfolioData.name} <span className="text-gold-500">{portfolioData.lastName}</span>
                 </h1>
-                <p className={`text-xl md:text-2xl ${isDark ? 'text-neutral-400' : 'text-neutral-600'} font-medium mb-8`}>
-                  Social Media Specialist & Graphic Designer
+                <p className={`text-lg md:text-2xl ${isDark ? 'text-neutral-400' : 'text-neutral-600'} font-medium mb-6 md:mb-8`}>
+                  {portfolioData.role}
                 </p>
-                <p className={`${isDark ? 'text-neutral-400' : 'text-neutral-500'} max-w-xl mb-10 leading-relaxed text-lg`}>
-                  Membantu brand bertumbuh melalui strategi media sosial yang kreatif dan visual yang memukau. Berpengalaman dalam mengelola kampanye digital dan branding identitas.
+                <p className={`${isDark ? 'text-neutral-400' : 'text-neutral-500'} max-w-xl mx-auto md:mx-0 mb-8 md:mb-10 leading-relaxed text-base md:text-lg`}>
+                  {portfolioData.description}
                 </p>
                 
-                <div className="flex flex-wrap justify-center md:justify-start gap-4">
-                  <div className="group relative">
-                    <button className="bg-gold-500 text-neutral-950 px-8 py-4 rounded-xl font-bold hover:bg-gold-400 transition-all flex items-center gap-3 shadow-lg shadow-gold-500/20">
+                <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-4">
+                  <div className="group relative w-full sm:w-auto">
+                    <button className="w-full sm:w-auto bg-gold-500 text-neutral-950 px-8 py-4 rounded-xl font-bold hover:bg-gold-400 transition-all flex items-center justify-center gap-3 shadow-lg shadow-gold-500/20">
                       <Download size={20} />
                       Download CV
                     </button>
-                    <div className="absolute left-0 mt-2 w-48 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                      <a href={CV_PDF_PATH} download className="flex items-center gap-3 px-4 py-4 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-gold-500 rounded-t-xl transition-colors">
+                    <div className="absolute left-0 mt-2 w-full sm:w-48 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                      <a href={portfolioData.cvPdfPath} download className="flex items-center gap-3 px-4 py-4 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-gold-500 rounded-t-xl transition-colors">
                         <FileText size={18} /> Download PDF
                       </a>
-                      <a href={CV_JPG_PATH} download className="flex items-center gap-3 px-4 py-4 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-gold-500 rounded-b-xl transition-colors">
+                      <a href={portfolioData.cvJpgPath} download className="flex items-center gap-3 px-4 py-4 text-sm text-neutral-300 hover:bg-neutral-800 hover:text-gold-500 rounded-b-xl transition-colors">
                         <ImageIcon size={18} /> Download JPG
                       </a>
                     </div>
                   </div>
                   <a 
-                    href="https://wa.me/6281234567890" 
+                    href={`https://wa.me/${portfolioData.whatsappNumber}`} 
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`px-8 py-4 rounded-xl font-bold transition-all flex items-center gap-3 border ${isDark ? 'bg-neutral-800 text-white border-neutral-700 hover:bg-neutral-700' : 'bg-white text-neutral-800 border-neutral-200 hover:bg-neutral-50'}`}
+                    className={`px-8 py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-3 border ${isDark ? 'bg-neutral-800 text-white border-neutral-700 hover:bg-neutral-700' : 'bg-white text-neutral-800 border-neutral-200 hover:bg-neutral-50'}`}
                   >
                     <MessageCircle size={20} className="text-green-500" />
                     WhatsApp
@@ -325,7 +448,7 @@ export default function App() {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {skills.map((skill, index) => (
+            {portfolioData.skills.map((skill: any, index: number) => (
               <motion.div
                 key={skill.name}
                 initial={{ opacity: 0, y: 30 }}
@@ -370,7 +493,7 @@ export default function App() {
           </motion.div>
 
           <div className={`relative space-y-12 before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b ${isDark ? 'before:from-transparent before:via-neutral-800 before:to-transparent' : 'before:from-transparent before:via-neutral-200 before:to-transparent'}`}>
-            {experiences.map((exp, index) => (
+            {portfolioData.experiences.map((exp: any, index: number) => (
               <motion.div 
                 key={index}
                 initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
@@ -418,7 +541,7 @@ export default function App() {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {education.map((edu, index) => (
+            {portfolioData.education.map((edu: any, index: number) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, scale: 0.9 }}
@@ -474,9 +597,9 @@ export default function App() {
                   
                   <div className="grid grid-cols-1 gap-4">
                     {[
-                      { icon: Phone, text: '0812-3456-7890', label: 'Phone' },
-                      { icon: Mail, text: 'siti.rahmawati@email.com', label: 'Email' },
-                      { icon: MapPin, text: 'Bandung, Jawa Barat', label: 'Location' }
+                      { icon: Phone, text: portfolioData.phone, label: 'Phone' },
+                      { icon: Mail, text: portfolioData.email, label: 'Email' },
+                      { icon: MapPin, text: portfolioData.address, label: 'Location' }
                     ].map((item, i) => (
                       <motion.div 
                         key={i}
@@ -589,7 +712,7 @@ export default function App() {
 
                   <div className="mt-10 pt-8 border-t border-neutral-800/50 flex flex-col sm:flex-row gap-4">
                     <a 
-                      href="https://wa.me/6281234567890" 
+                      href={`https://wa.me/${portfolioData.whatsappNumber}`} 
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex-1 bg-green-600/10 text-green-500 px-6 py-4 rounded-xl font-bold hover:bg-green-600 hover:text-white transition-all flex items-center justify-center gap-3 border border-green-600/20"
@@ -598,7 +721,7 @@ export default function App() {
                       WhatsApp
                     </a>
                     <a 
-                      href="mailto:siti.rahmawati@email.com" 
+                      href={`mailto:${portfolioData.email}`} 
                       className={`flex-1 px-6 py-4 rounded-xl font-bold transition-all flex items-center justify-center gap-3 border ${isDark ? 'bg-neutral-800 text-white border-neutral-700 hover:bg-neutral-700' : 'bg-white text-neutral-800 border-neutral-200 hover:bg-neutral-50'}`}
                     >
                       <Mail size={20} className="text-gold-500" />
@@ -615,29 +738,37 @@ export default function App() {
       {/* Footer */}
       <footer className={`py-12 border-t ${isDark ? 'border-neutral-900' : 'border-neutral-200'}`}>
         <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="text-gold-500 font-display font-bold text-xl">SR</div>
+          <div className="text-gold-500 font-display font-bold text-xl">
+            {portfolioData.name.charAt(0)}{portfolioData.lastName.charAt(0)}
+          </div>
           <p className={`${isDark ? 'text-neutral-500' : 'text-neutral-400'} text-sm`}>
-            © 2026 Siti Rahmawati — All Rights Reserved
+            © 2026 {portfolioData.name} {portfolioData.lastName} — All Rights Reserved
           </p>
-          <div className="flex gap-4">
-            {[
-              { Icon: Instagram, url: 'https://instagram.com/placeholder' },
-              { Icon: Linkedin, url: 'https://linkedin.com/in/placeholder' },
-              { Icon: Github, url: 'https://github.com/placeholder' }
-            ].map(({ Icon, url }, i) => (
-              <a 
-                key={i} 
-                href={url} 
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`w-10 h-10 rounded-full ${isDark ? 'bg-neutral-900' : 'bg-neutral-100'} flex items-center justify-center text-neutral-500 hover:text-gold-500 hover:bg-neutral-800 transition-all`}
-              >
-                <Icon size={18} />
-              </a>
-            ))}
+          <div className="flex flex-wrap justify-center md:justify-end gap-4">
+            {portfolioData.socialLinks.map((link: any, i: number) => {
+              const Icon = getSocialIcon(link.platform);
+              return (
+                <a 
+                  key={i} 
+                  href={link.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className={`w-10 h-10 rounded-full ${isDark ? 'bg-neutral-900' : 'bg-neutral-100'} flex items-center justify-center text-neutral-500 hover:text-gold-500 hover:bg-neutral-800 transition-all`}
+                >
+                  <Icon size={18} />
+                </a>
+              );
+            })}
           </div>
         </div>
       </footer>
+
+      {/* Admin Panel */}
+      <AdminPanel 
+        data={portfolioData} 
+        onDataUpdate={setPortfolioData} 
+        isDark={isDark} 
+      />
     </div>
   );
 }
