@@ -15,7 +15,8 @@ import {
   GraduationCap,
   Globe,
   Upload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  FileText
 } from 'lucide-react';
 import { db, auth } from '../firebase';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
@@ -225,68 +226,13 @@ export default function AdminPanel({ data, onDataUpdate, isDark }: AdminPanelPro
                       <h4 className="text-base md:text-lg font-bold mt-6 md:mt-8 mb-3 md:mb-4 text-gold-500">Foto & File</h4>
                       <div className="space-y-4">
                         <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500 ml-1 block">Foto Profil (Drag & Drop untuk Unggah)</label>
-                        <div 
-                          onDragOver={(e) => {
-                            e.preventDefault();
-                            e.currentTarget.classList.add('border-gold-500', 'bg-gold-500/5');
-                          }}
-                          onDragLeave={(e) => {
-                            e.preventDefault();
-                            e.currentTarget.classList.remove('border-gold-500', 'bg-gold-500/5');
-                          }}
-                          onDrop={(e) => {
-                            e.preventDefault();
-                            e.currentTarget.classList.remove('border-gold-500', 'bg-gold-500/5');
-                            const file = e.dataTransfer.files[0];
-                            if (file && file.type.startsWith('image/')) {
-                              const reader = new FileReader();
-                              reader.onload = (event) => {
-                                setTempData({ ...tempData, profileImageUrl: event.target?.result as string });
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                          className={`relative border-2 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center gap-4 transition-all ${isDark ? 'border-neutral-800 bg-neutral-900/50' : 'border-neutral-200 bg-neutral-50'}`}
-                        >
-                          {tempData.profileImageUrl ? (
-                            <div className="relative group">
-                              <img src={tempData.profileImageUrl} alt="Preview" className="w-24 h-24 rounded-xl object-cover border border-gold-500/50" />
-                              <div className="absolute inset-0 bg-neutral-950/40 rounded-xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none">
-                                <Upload size={20} className="text-white" />
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="w-16 h-16 rounded-full bg-gold-500/10 flex items-center justify-center text-gold-500">
-                              <ImageIcon size={32} />
-                            </div>
-                          )}
-                          <div className="text-center">
-                            <p className="text-sm font-bold">Lepaskan gambar di sini</p>
-                            <p className="text-xs text-neutral-500 mt-1">Atau klik tombol di bawah untuk memilih file</p>
-                          </div>
-                          <input 
-                            type="file" 
-                            id="profileUpload" 
-                            className="hidden" 
-                            accept="image/*"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                const reader = new FileReader();
-                                reader.onload = (event) => {
-                                  setTempData({ ...tempData, profileImageUrl: event.target?.result as string });
-                                };
-                                reader.readAsDataURL(file);
-                              }
-                            }}
-                          />
-                          <button 
-                            onClick={() => document.getElementById('profileUpload')?.click()}
-                            className="px-4 py-2 bg-neutral-800 text-white text-xs font-bold rounded-lg hover:bg-neutral-700 transition-colors"
-                          >
-                            Pilih Foto
-                          </button>
-                        </div>
+                        <FileUpload 
+                          isDark={isDark}
+                          accept="image/*"
+                          icon={<ImageIcon size={32} />}
+                          value={tempData.profileImageUrl}
+                          onUpload={(dataUrl: string) => setTempData({ ...tempData, profileImageUrl: dataUrl })}
+                        />
                         <Field 
                           label="Atau Gunakan URL Foto" 
                           value={tempData.profileImageUrl.startsWith('data:') ? '[Base64 Image Uploaded]' : tempData.profileImageUrl} 
@@ -296,8 +242,40 @@ export default function AdminPanel({ data, onDataUpdate, isDark }: AdminPanelPro
                         />
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                        <Field label="Path CV PDF" value={tempData.cvPdfPath} onChange={(v: string) => setTempData({...tempData, cvPdfPath: v})} isDark={isDark} />
-                        <Field label="Path CV JPG" value={tempData.cvJpgPath} onChange={(v: string) => setTempData({...tempData, cvJpgPath: v})} isDark={isDark} />
+                        <div className="space-y-4">
+                          <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500 ml-1 block">CV PDF (Drag & Drop untuk Unggah)</label>
+                          <FileUpload 
+                            isDark={isDark}
+                            accept="application/pdf"
+                            icon={<FileText size={32} />}
+                            value={tempData.cvPdfPath}
+                            onUpload={(dataUrl) => setTempData({ ...tempData, cvPdfPath: dataUrl })}
+                          />
+                          <Field 
+                            label="Atau Gunakan Path/URL PDF" 
+                            value={tempData.cvPdfPath.startsWith('data:') ? '[Base64 PDF Uploaded]' : tempData.cvPdfPath} 
+                            onChange={(v: string) => setTempData({...tempData, cvPdfPath: v})} 
+                            isDark={isDark} 
+                            compact 
+                          />
+                        </div>
+                        <div className="space-y-4">
+                          <label className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-500 ml-1 block">CV JPG Image (Drag & Drop untuk Unggah)</label>
+                          <FileUpload 
+                            isDark={isDark}
+                            accept="image/*"
+                            icon={<ImageIcon size={32} />}
+                            value={tempData.cvJpgPath}
+                            onUpload={(dataUrl) => setTempData({ ...tempData, cvJpgPath: dataUrl })}
+                          />
+                          <Field 
+                            label="Atau Gunakan Path/URL JPG" 
+                            value={tempData.cvJpgPath.startsWith('data:') ? '[Base64 Image Uploaded]' : tempData.cvJpgPath} 
+                            onChange={(v: string) => setTempData({...tempData, cvJpgPath: v})} 
+                            isDark={isDark} 
+                            compact 
+                          />
+                        </div>
                       </div>
 
                       <h4 className="text-base md:text-lg font-bold mt-6 md:mt-8 mb-3 md:mb-4 text-gold-500 uppercase tracking-widest">Kontak</h4>
@@ -370,16 +348,34 @@ export default function AdminPanel({ data, onDataUpdate, isDark }: AdminPanelPro
                         {tempData.skills.map((skill: any, idx: number) => (
                           <div key={idx} className={`p-3 md:p-4 rounded-xl border flex flex-wrap md:flex-nowrap items-center gap-3 md:gap-4 ${isDark ? 'bg-neutral-900 border-neutral-800' : 'bg-neutral-50 border-neutral-200'}`}>
                             <div className="flex items-center gap-3 flex-1 min-w-[200px]">
-                              <input className="w-10 text-center bg-transparent border-none focus:ring-0 text-lg" value={skill.icon} onChange={(e) => {
-                                const newSkills = [...tempData.skills];
-                                newSkills[idx].icon = e.target.value;
-                                setTempData({...tempData, skills: newSkills});
-                              }} />
-                              <input className="flex-1 bg-transparent border-none focus:ring-0 font-bold text-sm" value={skill.name} onChange={(e) => {
-                                const newSkills = [...tempData.skills];
-                                newSkills[idx].name = e.target.value;
-                                setTempData({...tempData, skills: newSkills});
-                              }} />
+                              <input 
+                                className="w-10 text-center bg-transparent border-none focus:ring-0 text-lg hover:bg-gold-500/10 rounded transition-colors" 
+                                value={skill.icon} 
+                                title="Klik untuk ubah ikon manual"
+                                onChange={(e) => {
+                                  const newSkills = [...tempData.skills];
+                                  newSkills[idx].icon = e.target.value;
+                                  setTempData({...tempData, skills: newSkills});
+                                }} 
+                              />
+                              <input 
+                                className="flex-1 bg-transparent border-none focus:ring-0 font-bold text-sm" 
+                                placeholder="Nama Skill (cth: Figma)"
+                                value={skill.name} 
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  const newSkills = [...tempData.skills];
+                                  newSkills[idx].name = val;
+                                  
+                                  // Auto-suggest icon based on keywords
+                                  const suggested = getSuggestedIcon(val);
+                                  if (suggested) {
+                                    newSkills[idx].icon = suggested;
+                                  }
+                                  
+                                  setTempData({...tempData, skills: newSkills});
+                                }} 
+                              />
                             </div>
                             <div className="flex items-center gap-2 w-full md:w-auto">
                               <input type="range" className="flex-1 md:w-24 accent-gold-500" min="0" max="100" value={skill.level} onChange={(e) => {
@@ -565,6 +561,80 @@ export default function AdminPanel({ data, onDataUpdate, isDark }: AdminPanelPro
   );
 }
 
+function FileUpload({ isDark, accept, icon, onUpload, value, label }: any) {
+  const [isDragging, setIsDragging] = useState(false);
+  const inputId = `upload-${Math.random().toString(36).substr(2, 9)}`;
+
+  const handleFile = (file: File) => {
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        onUpload?.(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  return (
+    <div 
+      onDragOver={(e) => {
+        e.preventDefault();
+        setIsDragging(true);
+      }}
+      onDragLeave={(e) => {
+        e.preventDefault();
+        setIsDragging(false);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const file = e.dataTransfer.files[0];
+        handleFile(file);
+      }}
+      className={`relative border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center gap-3 transition-all ${isDragging ? 'border-gold-500 bg-gold-500/5' : ''} ${isDark ? 'border-neutral-800 bg-neutral-900/50' : 'border-neutral-200 bg-neutral-50'}`}
+    >
+      {value ? (
+        <div className="relative group">
+          {accept.includes('image') && value.startsWith('data:image') ? (
+            <img src={value} alt="Preview" className="w-16 h-16 rounded-lg object-cover border border-gold-500/50" />
+          ) : (
+            <div className="w-16 h-16 rounded-lg bg-gold-500/10 flex items-center justify-center text-gold-500">
+              {icon}
+            </div>
+          )}
+          <div className="absolute inset-0 bg-neutral-950/40 rounded-lg opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity pointer-events-none">
+            <Upload size={16} className="text-white" />
+          </div>
+        </div>
+      ) : (
+        <div className="w-12 h-12 rounded-full bg-gold-500/10 flex items-center justify-center text-gold-500">
+          {icon}
+        </div>
+      )}
+      <div className="text-center">
+        <p className="text-xs font-bold">{label || 'Lepaskan file di sini'}</p>
+      </div>
+      <input 
+        type="file" 
+        id={inputId} 
+        className="hidden" 
+        accept={accept}
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) handleFile(file);
+        }}
+      />
+      <button 
+        type="button"
+        onClick={() => document.getElementById(inputId)?.click()}
+        className="px-3 py-1.5 bg-neutral-800 text-white text-[10px] font-bold rounded-lg hover:bg-neutral-700 transition-colors"
+      >
+        Pilih File
+      </button>
+    </div>
+  );
+}
+
 function Field({ label, value, defaultValue, type = 'text', onChange, isDark, compact = false, name }: any) {
   const inputClasses = `w-full ${compact ? 'p-3' : 'p-4'} rounded-xl border focus:outline-none focus:border-gold-500 transition-all ${isDark ? 'bg-neutral-950 border-neutral-800' : 'bg-white border-neutral-200'}`;
   
@@ -589,4 +659,47 @@ function Field({ label, value, defaultValue, type = 'text', onChange, isDark, co
       )}
     </div>
   );
+}
+
+const skillIconMap: { [key: string]: string } = {
+  'social media': '📱',
+  'instagram': '📸',
+  'facebook': '👥',
+  'tiktok': '🎵',
+  'youtube': '🎥',
+  'design': '🎨',
+  'graphic': '🎨',
+  'illustrator': '🖌️',
+  'photoshop': '🖼️',
+  'figma': '💠',
+  'writing': '✍️',
+  'copywriting': '📝',
+  'content': '📄',
+  'video': '🎬',
+  'editing': '✂️',
+  'marketing': '📈',
+  'seo': '🔍',
+  'ads': '💰',
+  'code': '💻',
+  'web': '🌐',
+  'react': '⚛️',
+  'javascript': '🟨',
+  'python': '🐍',
+  'ui': '📐',
+  'ux': '🧠',
+  'english': '🇬🇧',
+  'translation': '🔤',
+  'photography': '📷',
+  'branding': '🏷️',
+  'strategy': '🎯',
+  'management': '💼',
+  'communication': '🗣️',
+};
+
+function getSuggestedIcon(name: string): string | null {
+  const lowerName = name.toLowerCase();
+  for (const [key, icon] of Object.entries(skillIconMap)) {
+    if (lowerName.includes(key)) return icon;
+  }
+  return null;
 }
