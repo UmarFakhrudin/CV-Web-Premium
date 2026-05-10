@@ -315,8 +315,16 @@ export default function AdminPanel({ data, onDataUpdate, isDark }: AdminPanelPro
                               placeholder="URL Link"
                               value={link.url} 
                               onChange={(e) => {
+                                const val = e.target.value;
                                 const newLinks = [...tempData.socialLinks];
-                                newLinks[idx].url = e.target.value;
+                                newLinks[idx].url = val;
+                                
+                                // Auto-detect platform from URL
+                                const detected = detectPlatformFromUrl(val);
+                                if (detected && (!link.platform || link.platform === 'New Platform')) {
+                                  newLinks[idx].platform = detected;
+                                }
+                                
                                 setTempData({...tempData, socialLinks: newLinks});
                               }} 
                             />
@@ -701,5 +709,20 @@ function getSuggestedIcon(name: string): string | null {
   for (const [key, icon] of Object.entries(skillIconMap)) {
     if (lowerName.includes(key)) return icon;
   }
+  return null;
+}
+
+function detectPlatformFromUrl(url: string): string | null {
+  const u = url.toLowerCase();
+  if (u.includes('facebook.com')) return 'Facebook';
+  if (u.includes('instagram.com')) return 'Instagram';
+  if (u.includes('linkedin.com')) return 'Linkedin';
+  if (u.includes('github.com')) return 'Github';
+  if (u.includes('twitter.com') || u.includes('x.com')) return 'Twitter';
+  if (u.includes('wa.me') || u.includes('whatsapp.com')) return 'WhatsApp';
+  if (u.includes('youtube.com') || u.includes('youtu.be')) return 'YouTube';
+  if (u.includes('tiktok.com')) return 'TikTok';
+  if (u.includes('dribbble.com')) return 'Dribbble';
+  if (u.includes('behance.net')) return 'Behance';
   return null;
 }
